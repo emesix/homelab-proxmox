@@ -1,237 +1,222 @@
-# Proxmox Cluster & User Implementation Plan
+# 20 – Proxmox Cluster & Users
 
-## Scope & Goals
+Dit document beschrijft het basisontwerp voor:
 
-This document describes how the Proxmox cluster and user/role model are set up
-in a **simple staging network**:
+- de Proxmox-cluster (welke nodes, welke rollen),
+- de gebruikers en rechten in Proxmox,
+- hoe we hosts toevoegen aan de cluster,
+- hoe we API-tokens veilig willen inzetten.
 
-- Management / staging network: `10.10.10.0/24` with DHCP.
-- All Proxmox hosts are connected to this network during initial setup.
-- After the first Proxmox node is configured as the **seed node**, all other
-  nodes should be easy to install and join to the same cluster.
+Het doel is dat:
 
-Network details such as VLANs, final IP schema and OPNsense rules are handled
-in separate documents. Here we focus only on:
+- je **Qotom**-node de eerste “seed” van de cluster wordt;
+- alle andere nodes op een voorspelbare manier worden toegevoegd;
+- je niet afhankelijk blijft van `root@pam` voor dagelijks beheer.
 
-- Cluster structure (nodes, cluster name).
-- User/role model (admin user, automation users).
-- Using **community-scripts** (Proxmox VE Helper-Scripts) to standardize
-  repository and base configuration where helpful.
+---
 
-## 1. Staging Environment & Naming
+## 1. Cluster-overzicht
 
-### 1.1. Staging Network
+### 1.1. Nodes (bare-metal Proxmox hosts)
 
-- IPv4: `10.10.10.0/24`
-- Gateway: `10.10.10.1`
-- DNS: typically the same as the gateway, or a public resolver.
-- DHCP: enabled to hand out `10.10.10.x` addresses to all Proxmox hosts.
+| Host hardware        | PVE-hostnaam          | Bijnaam        | Rol                                |
+|----------------------|-----------------------|----------------|-------------------------------------|
+| Qotom 1U             | `pmx-qotom`           | **vuurbuur**   | Eerste node, OPNsense-VM, infra    |
+| HX310-1 (DB)         | `pmx-hx310-db`        | **breintrein** | DB/infra-services (Postgres/Wiki)  |
+| HX310-2 (*ARR)       | `pmx-hx310-arr`       | **downloadboef** | *ARR en media-backend           |
+| B450 5700G           | `pmx-docker`          | **klusbus**    | Docker workloads                    |
+| CW-NAS-AMD (FP7)     | `pmx-ai-ctl`          | **hoofdstuk**  | AI-controller & orkestrator         |
+| X99 dual Xeon        | `pmx-ai-worker`       | **denkdoos**   | AI-worker / GPU compute             |
 
-This is a **temporary / staging** environment for:
+Unraid NAS en de APU’s zijn **geen** Proxmox-nodes; die blijven apart beheer.
 
-- Clean installation of all Proxmox hosts.
-- Initial cluster formation.
-- Initial user/role setup and basic verification.
+---
 
-Later the hosts can be moved to the final management network (with VLANs and
-static addresses).
+## 2. Cluster-aanpak
 
-### 1.2. Hostnames & IPs (Staging)
+### 2.1. Qotom als eerste node
 
-Proposed staging hostnames and addresses:
+1. Installeer Proxmox op Qotom (`pmx-qotom`).
+2. Gebruik een IP uit je management- of user-VLAN (tijdelijk mag het simpel).
+3. Run het PVE Post-install script (community-scripts) om:
+   - enterprise repo uit te zetten,
+   - no-subscription repo te activeren,
+   - basis updates te doen.
 
-| Host          | Role            | Hostname (staging) | IP (10.10.10.0/24) |
-|---------------|-----------------|--------------------|---------------------|
-| Qotom 1U      | Cluster seed    | `pmx-qotom`        | 10.10.10.11         |
-| HX310-1       | DB / core       | `pmx-hx310-db`     | 10.10.10.21         |
-| HX310-2       | *ARR / media    | `pmx-hx310-arr`    | 10.10.10.22         |
-| B450 5700G    | Docker worker   | `pmx-docker`       | 10.10.10.31         |
-| X99 dual      | AI worker       | `pmx-ai-worker`    | 10.10.10.41         |
-| CW-NAS-AMD    | AI controller   | `pmx-ai-ctl`       | 10.10.10.51         |
+Zodra `pmx-qotom` stabiel draait:
 
-In staging you can start with pure DHCP and later convert these to DHCP
-reservations or static IPs once the addresses are stable.
+- wordt dit de node waar de OPNsense-VM gaat draaien;
+- en de node waarmee je de cluster initieel gaat beheren.
 
-## 2. Cluster Concept: Seed Node + Join
+### 2.2. Cluster init op Qotom
 
-### 2.1. Cluster Name
+Op `pmx-qotom`:
 
-- Cluster name: `homelab-cluster`
+- Controleer dat de hostname goed staat (`pmx-qotom`),
+- Controleer tijd/NTP.
 
-This name is used on the **first node** (the seed node) when the cluster is
-created with `pvecm create`.
-
-### 2.2. Seed Node (Qotom)
-
-The Qotom host acts as the **cluster seed node**:
-
-1. Install Proxmox VE on Qotom.
-2. Ensure it gets an address in `10.10.10.x`.
-3. On Qotom, create the cluster:
-
-   ```bash
-   pvecm create homelab-cluster
-   ```
-
-After this, `pmx-qotom` is the initial member of the cluster and serves as
-the point where other nodes will join.
-
-## 3. User Model: Away From root@pam
-
-The goal is to avoid daily management via `root@pam`, and instead:
-
-- Use `root@pam` for:
-  - initial installation,
-  - break-glass / recovery.
-- Use one or more **admin users** in the PVE realm for daily operations.
-- Use dedicated **automation users** for tasks like Warp.dev, CI jobs, etc.
-- Optionally use read-only users for dashboards / monitoring.
-
-### 3.1. Realms
-
-- `PAM` realm:
-  - Only `root@pam` and possibly OS-level admins.
-- `PVE` realm:
-  - Internal Proxmox users (`vincent@pve`, `warpdev@pve`, etc.).
-
-### 3.2. Groups & Roles
-
-Define three core groups:
-
-- `homelab-admins`  
-  Full administrator rights for the entire datacenter.
-- `automation`  
-  Users that perform scripted or API-based tasks.
-- `readonly`  
-  Read-only access for monitoring/inspection.
-
-Proxmox built-in roles of interest:
-
-- `Administrator` – full control over the assigned path.
-- `PVEAdmin` – powerful admin but without some global tasks.
-- `PVEVMAdmin` – mainly VM/LXC related rights.
-- `PVEAuditor` – read-only.
-
-### 3.3. Primary Admin User
-
-A dedicated admin user, e.g. `vincent@pve`, is used for everyday management.
-
-On the seed node:
+Cluster aanmaken:
 
 ```bash
-# Create admin group
-pveum group add homelab-admins --comment "Full admins for homelab"
-
-# Create admin user in PVE realm
-pveum user add vincent@pve --comment "Vincent homelab admin"
-
-# Add user to admin group
-pveum groupmod homelab-admins -add_user vincent@pve
-
-# Give admin group full rights on the datacenter
-pveum aclmod / -group homelab-admins -role Administrator
+pvecm create homelab-cluster
 ```
 
-From this point, login via the web UI as:
+- Clusternaam: `homelab-cluster`.
+
+---
+
+## 3. Nodes toevoegen aan de cluster
+
+### 3.1. Voorwaarden per nieuwe node
+
+Voor elke nieuwe node (HX310’s, B450, X99):
+
+1. Proxmox installeren met juiste hostname.
+2. Repos via PVE Post-install script fixen.
+3. SSH-toegang van Qotom naar de nieuwe node (tijdelijk root-key of wachtwoord).
+
+### 3.2. Node join
+
+Op **doelnode** (bijv. `pmx-hx310-db`):
+
+- Zorg dat je de IP van `pmx-qotom` kunt pingen.
+
+Op **Qotom**:
+
+```bash
+pvecm status   # controleren dat cluster ok is
+```
+
+Op **doelnode**:
+
+```bash
+pvecm add <IP-van-pmx-qotom>
+```
+
+Volg de prompt voor root-wachtwoord of key-based auth.
+
+Na succesvolle join:
+
+- De nieuwe node verschijnt in de Proxmox-UI aan de linkerkant.
+- Je kunt resources (VM/LXC) op die node aanmaken of migreren.
+
+Herhaal dit voor:
+
+- `pmx-hx310-db`,
+- `pmx-hx310-arr`,
+- `pmx-docker`,
+- `pmx-ai-ctl`,
+- `pmx-ai-worker`.
+
+---
+
+## 4. Gebruikers & rollen in Proxmox
+
+### 4.1. Root vs admin-gebruiker
+
+`root@pam` blijft bestaan, maar:
+
+- wordt alleen gebruikt voor:
+  - cluster-init,
+  - noodoperaties,
+  - recovery.
+- niet voor dagelijks beheer en API-tokens.
+
+Daarom maken we een admin-gebruiker:
 
 - User: `vincent@pve`
-- Realm: `PVE`
+- Realm: `pve`
+- Rol: `Administrator` op `/` (cluster breed).
 
-`root@pam` is kept as a break-glass account.
+Stappen:
 
-### 3.4. Automation User
+1. In PVE-UI: **Datacenter → Permissions → Users → Add**.
+2. User ID: `vincent`
+3. Realm: `pve`
+4. E-mailadres: jouw eigen mailadres
+5. Wachtwoord: **random, in Vaultwarden opslaan**.
 
-For Warp.dev or similar automation:
+Daarna:
 
-```bash
-# Group for automation
-pveum group add automation --comment "Automation & API clients"
+- **Permissions → Add → User Permission**:
+  - Path: `/`
+  - User: `vincent@pve`
+  - Role: `Administrator`
 
-# Automation user
-pveum user add warpdev@pve --comment "Warp.dev automation user"
+### 4.2. Extra (optionele) rollen
 
-# Add user to automation group
-pveum groupmod automation -add_user warpdev@pve
+Je kunt later aanvullende rollen overwegen:
 
-# Give automation group VM admin rights
-pveum aclmod / -group automation -role PVEVMAdmin
-```
+- `BackupAdmin` – mag alleen backups en restores.
+- `VMAdmin` – mag VM’s beheren maar niet de cluster zelf.
+- `ReadOnly` – voor een read-only UI-account.
 
-Then create an API token for `warpdev@pve` via the Proxmox web UI:
+Voor nu: focus op `vincent@pve` als primary admin.
 
-- Datacenter → Permissions → API Tokens → Add
-  - User: `warpdev@pve`
-  - Token Name: e.g. `warp-cli`
-  - Enable privilege separation.
+---
 
-Later, ACL scope for automation can be tightened to only the paths that
-really need management (for instance `/nodes/pmx-ai-worker` or `/vms`).
+## 5. API-tokens
 
-### 3.5. Read-Only User (Optional)
+### 5.1. Gebruiksscenario’s
 
-For monitoring or dashboards:
+Je wilt API-tokens kunnen inzetten voor:
 
-```bash
-pveum group add readonly --comment "Read-only viewers"
+- Automation (bijv. Warp.dev, scripts),
+- Integraties (backups, monitoring).
 
-pveum user add viewer@pve --comment "Read-only viewer"
-pveum groupmod readonly -add_user viewer@pve
+Regel:
 
-pveum aclmod / -group readonly -role PVEAuditor
-```
+- Geen tokens op `root@pam`.
+- Tokens bij voorkeur op `vincent@pve` of een dedicated “service user”.
 
-## 4. Helper Scripts Strategy (High-Level)
+### 5.2. Token aanmaken
 
-The Proxmox VE Helper-Scripts project provides community-maintained scripts
-to manage repositories, set up LXC containers and more. They are **not
-official Proxmox** scripts and should be treated as a convenience layer,
-especially in homelab scenarios.
+In de PVE-UI:
 
-For the cluster and user setup phase, the following scripts are most
-relevant (exact usage details in `docs/plan/30-helper-scripts-strategy.md`):
+1. Ga naar: **Datacenter → Permissions → API Tokens**.
+2. Kies `Add`.
+3. User: `vincent@pve` of aparte user zoals `automation@pve`.
+4. Token ID: bijv. `warpdev`.
+5. Toggle:
+   - `Privilege Separation`: **aan** als je per-token rechten wilt toekennen.
+   - Expiry: stel een datum in als extra veiligheid.
 
-- **PVE Post Install**  
-  Standardize repository configuration and basic post-install tasks on each
-  Proxmox node.
-- **PVEScripts-Local (PVE Scripts Local)**  
-  Optional web UI-based script manager that exposes the helper scripts in a
-  local web interface.
-- **Kernel Pin**  
-  Used after the cluster is stable to pin a known-good kernel on specific
-  nodes (e.g. GPUs, ZFS heavy nodes).
-- **PBS Post Install**  
-  Similar to PVE Post Install, but for Proxmox Backup Server nodes.
+Kopieer de token **eenmalig** en sla hem op in Vaultwarden onder:
 
-These scripts are integrated into the staging runbook so that every node is
-configured in a consistent way before joining the cluster.
+- `Proxmox API Token – warpdev – pmx-qotom`.
 
-## 5. Adding Nodes: Summary
+### 5.3. Rechten voor tokens
 
-Once the seed node (`pmx-qotom`) has:
+Als `Privilege Separation` aan staat:
 
-- The cluster created (`pvecm create homelab-cluster`),
-- User and group model (`vincent@pve`, `warpdev@pve`, etc.),
-- Repositories configured via helper scripts,
+- Maak een ACL aan voor het token specifiek:
+  - Path: `/`
+  - Token: `vincent@pve!warpdev`
+  - Role: bijvoorbeeld `PVEAdmin` of een custom rol met beperkter bereik.
 
-the process for each additional node is:
+Automations (zoals Warp.dev) krijgen dan:
 
-1. Install Proxmox VE.
-2. Connect the node to `10.10.10.x`.
-3. Run the **PVE Post Install** helper script and update packages.
-4. Join the cluster:
+- dezelfde of beperkte rechten vergeleken met je admin-gebruiker, maar:
+- je kunt het token intrekken zonder het account zelf te breken.
 
-   ```bash
-   pvecm add 10.10.10.11
-   ```
+---
 
-After joining, each node inherits the cluster-wide user and ACL configuration.
+## 6. Checklists
 
-## 6. Checklist
+### 6.1. Cluster-basics klaar?
 
-- [ ] Qotom installed with Proxmox VE and in `10.10.10.x`.
-- [ ] PVE Post Install script used on Qotom (repos fixed and updated).
-- [ ] Cluster created with `pvecm create homelab-cluster`.
-- [ ] `vincent@pve` created, added to `homelab-admins`, and `Administrator` on `/`.
-- [ ] `warpdev@pve` and other automation/read-only users created (if needed).
-- [ ] PVEScripts-Local installed on at least one node (optional but recommended).
-- [ ] Additional nodes installed, PVE Post Install used, and joined with `pvecm add`.
+- [ ] `pmx-qotom` draait Proxmox met fixed IP.
+- [ ] `homelab-cluster` is aangemaakt.
+- [ ] `vincent@pve` bestaat en heeft Administrator-rechten op `/`.
+- [ ] Je kunt inloggen als `vincent@pve` in de UI.
+- [ ] Je hebt minstens één API-token aangemaakt en in Vaultwarden gezet.
+
+### 6.2. Node-join checklist
+
+Voor elke extra node:
+
+- [ ] Proxmox geïnstalleerd met correcte hostname.
+- [ ] PVE Post-install script gedraaid (repos/updates ok).
+- [ ] Node kan `pmx-qotom` pingen.
+- [ ] `pvecm add <ip-qotom>` is succesvol geweest.
+- [ ] Node verschijnt in de cluster-UI.
