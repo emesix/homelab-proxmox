@@ -1,0 +1,28 @@
+# Example /etc/hosts for the Proxmox cluster
+
+# This file is intended as a template. Copy it to each Proxmox node and
+# adjust the 127.0.1.1 line so that it matches the local hostname.
+
+127.0.0.1       localhost
+::1             localhost ip6-localhost ip6-loopback
+
+# Local hostname (adjust per host)
+# On each node, change ONLY this line to the correct hostname:
+#   - pve-qotom01.internal pve-qotom01
+#   - pve-hx310-db.internal pve-hx310-db
+#   - pve-hx310-arr.internal pve-hx310-arr
+#   - pve-5700g.internal pve-5700g
+#   - pve-8845hs.internal pve-8845hs
+#   - pve-x2686-x2.internal pve-x2686-x2
+127.0.1.1       pve-qotom01.internal pve-qotom01
+
+# Proxmox cluster (hypervisors / management IPs)
+192.168.10.11   pve-qotom01.internal    pve-qotom01
+192.168.10.12   pve-hx310-db.internal   pve-hx310-db
+192.168.10.13   pve-hx310-arr.internal  pve-hx310-arr
+192.168.10.14   pve-5700g.internal      pve-5700g
+192.168.10.15   pve-8845hs.internal     pve-8845hs
+192.168.10.16   pve-x2686-x2.internal   pve-x2686-x2
+
+# Storage
+192.168.20.11   nas-main.internal       nas-main
