@@ -2,7 +2,7 @@
 
 ## Host
 
-- Primary: `pve-cwnas-ai` (CW-NAS-AMD-FP7-20G, Ryzen 7 8845HS, 64 GB RAM).
+- Primary: `pve-8845hs` (hoofdstuk, AMD Ryzen 7 8845HS Mini-PC, 64 GB RAM).
 
 ## Services
 

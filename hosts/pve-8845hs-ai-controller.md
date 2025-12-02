@@ -1,8 +1,8 @@
-# CW-NAS-AMD-FP7-20G – AI Controller
+# pve-8845hs (hoofdstuk) – AI Controller
 
-## Hardware Overview
+## Hardware
 
-- Board: CW-NAS-AMD-FP7-20G
+- Platform: AMD Ryzen 7 8845HS Mini-PC
 - CPU: Ryzen 7 8845HS (onboard)
 - RAM: 64 GB
 - Storage:
@@ -29,7 +29,8 @@ This node is intended to be **always on** and power-efficient.
 
 ## Proxmox Node
 
-- Node name: `pve-cwnas-ai` (placeholder).
+- Node name: `pve-8845hs`
+- Nickname: **hoofdstuk**
 - Management IP:
   - `10.10.200.30`
 

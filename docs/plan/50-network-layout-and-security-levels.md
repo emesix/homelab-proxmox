@@ -134,7 +134,7 @@ hoeft te beheren.
 **VLAN 120 – AI Backend**  
 - Subnet: `192.168.120.0/24`
 - Type:
-  - AI-controller (`hoofdstuk`, `pmx-ai-ctl`)
+  - AI-controller (`hoofdstuk`, `pve-8845hs`)
   - AI-worker (`denkdoos`, `pmx-ai-worker`)
 - Toegang:
   - Frontend/DMZ/Proxy mag alleen naar expliciete API-poorten op deze hosts.
@@ -223,7 +223,7 @@ Korte mapping hoe je de hosts in deze VLAN-structuur hangt:
   - Primair in VLAN 100 (generic backend) en storage-toegang naar VLAN 130.
 - **klusbus** (`pmx-docker`)
   - Docker-hosten in VLAN 100 (backend).
-- **hoofdstuk** (`pmx-ai-ctl`)
+- **hoofdstuk** (`pve-8845hs`)
   - In VLAN 120 (AI backend) met API-exposure naar frontend/DMZ.
 - **denkdoos** (`pmx-ai-worker`)
   - In VLAN 120 (AI backend), alleen bereikbaar via `hoofdstuk` en management-VLAN.

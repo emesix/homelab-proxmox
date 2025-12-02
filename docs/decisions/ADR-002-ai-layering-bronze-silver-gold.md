@@ -10,7 +10,7 @@ The homelab will use AI in three distinct ways:
 
 - External, high-quality models (expensive, but best results).
 - Local high-power AI worker (X99 + dual A770) which is not always online.
-- Local AI-orchestrator/controller (CW-NAS with 8845HS) which is always online and should be relatively lightweight.
+- Local AI-orchestrator/controller (pve-8845hs with 8845HS) which is always online and should be relatively lightweight.
 
 Requirements:
 
@@ -23,7 +23,7 @@ Requirements:
 Introduce a three-tier AI model:
 
 - **Bronze (Local Orchestrator)**:
-  - Runs on the CW-NAS AI-controller.
+  - Runs on the pve-8845hs AI-controller.
   - Handles:
     - lightweight reasoning,
     - glue code,

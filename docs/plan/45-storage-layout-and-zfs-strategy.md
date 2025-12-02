@@ -88,7 +88,7 @@ In short:
   - Media library itself:
     - Lives on NAS; this node mostly handles metadata and download pipelines.
 
-### 4. `pve-cwnas-ai` – AI Controller / Orchestrator
+### 4. `pve-8845hs` (hoofdstuk) – AI Controller / Orchestrator
 
 - Physical:
   - Multiple NVMe slots + linkage to NAS.

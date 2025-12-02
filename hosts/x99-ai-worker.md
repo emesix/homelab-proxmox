@@ -29,7 +29,7 @@ The node is **not always online** to save power, heat, and noise.
 ## Integration
 
 - Exposed through backend networks only.
-- Receives jobs from the AI controller (CW-NAS).
+- Receives jobs from the AI controller (pve-8845hs / hoofdstuk).
 - Should integrate with whatever queue/tooling is later chosen for AI orchestration.
 
 Further details will be defined in AI-specific documentation.

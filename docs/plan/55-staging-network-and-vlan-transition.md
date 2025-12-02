@@ -45,7 +45,7 @@ Suggested management IPs (inside `10.10.200.0/24` range):
   - `10.10.200.20`
 - HX310-ARR (media / *ARR / Docker controller):
   - `10.10.200.21`
-- CW-NAS-AMD-FP7 (AI controller):
+- pve-8845hs-AMD-FP7 (AI controller):
   - `10.10.200.30`
 - X99 Dual Xeon (AI worker):
   - `10.10.200.40`

@@ -27,7 +27,7 @@ Goal: All Proxmox hosts installed and reachable in a **flat staging network**.
 At this stage there are **no VLANs** yet – just a /16 – but the addressing scheme already matches the later design.
 
 Deliverables:
-- All Proxmox hosts installed (Qotom, HX310-DB, HX310-ARR, CW-NAS, X99 AI-worker, Ryzen Docker worker).
+- All Proxmox hosts installed (Qotom, HX310-DB, HX310-ARR, pve-8845hs, X99 AI-worker, Ryzen Docker worker).
 - Each host has:
   - management IP in the future `192.168.200.0/24` block,
   - basic SSH and Proxmox web UI reachable in the staging network.
@@ -108,9 +108,9 @@ Deliverables:
   - all HTTP/HTTPS user access goes via frontend/reverse-proxy,
   - management only from trusted admin networks.
 
-## Phase 5 – AI Controller (CW-NAS-AMD-FP7-20G)
+## Phase 5 – AI Controller (AMD Ryzen 7 8845HS Mini-PC)
 
-Goal: Stand up the **AI-orchestrator/control-plane** on the CW-NAS with the 8845HS.
+Goal: Stand up the **AI-orchestrator/control-plane** on the pve-8845hs with the 8845HS.
 
 Responsibilities:
 - “Bronze tier” AI:
@@ -131,7 +131,7 @@ The orchestrator must:
 - provide visibility in a queue/dashboard.
 
 Deliverables:
-- CW-NAS running:
+- pve-8845hs running:
   - Open WebUI or similar interface,
   - queue/worker-system,
   - simple dashboard of pending/running/completed jobs.

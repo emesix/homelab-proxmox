@@ -5,7 +5,7 @@
 - `pve-qotom` – LAN management / OPNsense VM / infra services.
 - `pve-hx310-db` – DB + Vaultwarden + Wiki.js + Git.
 - `pve-hx310-arr` – *ARR / media and light Docker frontends.
-- `pve-cwnas-ai` – AI controller / orchestrator.
+- `pve-8845hs` (hoofdstuk) – AI controller / orchestrator.
 - `pve-x99-ai` – AI worker (dual A770 GPUs).
 - `pve-ryzen-docker` – CPU-heavy Docker worker.
 

@@ -84,7 +84,7 @@ Convention (to be applied when scripts are created):
 
 ## 5. Interaction with AI-Orchestrator
 
-Long-term, the CW-NAS AI-controller will:
+Long-term, the pve-8845hs AI-controller will:
 
 - Read plans and runbooks from this repo and/or Wiki.js.
 - Prepare “execution plans” for complex changes.

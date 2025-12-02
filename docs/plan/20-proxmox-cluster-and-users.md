@@ -25,7 +25,7 @@ Het doel is dat:
 | HX310-1 (DB)         | `pmx-hx310-db`        | **breintrein** | DB/infra-services (Postgres/Wiki)  |
 | HX310-2 (*ARR)       | `pmx-hx310-arr`       | **downloadboef** | *ARR en media-backend           |
 | B450 5700G           | `pmx-docker`          | **klusbus**    | Docker workloads                    |
-| CW-NAS-AMD (FP7)     | `pmx-ai-ctl`          | **hoofdstuk**  | AI-controller & orkestrator         |
+| AMD 8845HS     | `pve-8845hs`          | **hoofdstuk**  | AI-controller & orkestrator         |
 | X99 dual Xeon        | `pmx-ai-worker`       | **denkdoos**   | AI-worker / GPU compute             |
 
 Unraid NAS en de APU’s zijn **geen** Proxmox-nodes; die blijven apart beheer.
@@ -105,7 +105,7 @@ Herhaal dit voor:
 - `pmx-hx310-db`,
 - `pmx-hx310-arr`,
 - `pmx-docker`,
-- `pmx-ai-ctl`,
+- `pve-8845hs`,
 - `pmx-ai-worker`.
 
 ---

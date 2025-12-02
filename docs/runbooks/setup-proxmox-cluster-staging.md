@@ -27,7 +27,7 @@ on VLANs or the final production network layout.
 - Hardware:
 
   - Qotom 1U (cluster seed node)
-  - Other Proxmox hosts (HX310-1, HX310-2, B450, X99, CW-NAS-AMD)
+  - Other Proxmox hosts (HX310-1, HX310-2, B450, X99, pve-8845hs-AMD)
 
 - Console access (local, IPMI, serial, etc.) to each host.
 - All hosts support the same Proxmox VE **major version** (e.g. all PVE 8.x).
@@ -221,7 +221,7 @@ Repeat the following pattern per additional Proxmox host.
 
 ### 4.1. Install Proxmox on Each Node
 
-For each host (HX310-1, HX310-2, B450, X99, CW-NAS-AMD):
+For each host (HX310-1, HX310-2, B450, X99, pve-8845hs-AMD):
 
 1. Boot from Proxmox installer and install Proxmox VE.
 2. During install, assign a hostname and ensure the node lands in

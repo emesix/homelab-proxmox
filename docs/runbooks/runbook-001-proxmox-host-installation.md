@@ -69,7 +69,7 @@ Example:
    - Qotom (LAN management / OPNsense host).
    - HX310-DB.
    - HX310-ARR.
-   - CW-NAS AI-controller.
+   - pve-8845hs AI-controller.
    - X99 AI-worker.
    - Ryzen Docker worker.
 

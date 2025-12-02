@@ -170,7 +170,7 @@ Samengevat per hosttype:
   - Docker-host-containers: helper-scripts mogen, maar:
     - Docker-stacks zelf blijven in `docker/stacks/` in je Git repo.
 
-- **AI-Controller & AI-Worker (`pmx-ai-ctl`, `pmx-ai-worker`)**:
+- **AI-Controller & AI-Worker (`pve-8845hs`, `pmx-ai-worker`)**:
   - PVE Post-install: **JA**.
   - AI-stacks (oneAPI, IPEX-LLM, OpenWebUI):
     - liever handmatig en/of via eigen scripts,

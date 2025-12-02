@@ -20,7 +20,7 @@ Hosts zitten in het interne domein: `*.local.emesix.nl`.
 | HX310-1 (DB)         | `pmx-hx310-db.local.emesix.nl`         | **breintrein** | Databases & core services           |
 | HX310-2 (*ARR)       | `pmx-hx310-arr.local.emesix.nl`        | **downloadboef** | Mediaautomation & downloads       |
 | B450 5700G           | `pmx-docker.local.emesix.nl`           | **klusbus**    | Zware Docker workloads              |
-| CW-NAS-AMD (FP7)     | `pmx-ai-ctl.local.emesix.nl`           | **hoofdstuk**  | AI-controller & orkestratie         |
+| AMD 8845HS     | `pve-8845hs.local.emesix.nl`           | **hoofdstuk**  | AI-controller & orkestratie         |
 | X99 dual Xeon        | `pmx-ai-worker.local.emesix.nl`        | **denkdoos**   | AI-worker / GPU compute             |
 | Unraid NAS           | `nas-unraid.local.emesix.nl`           | **schuifkast** | Storage, backups & media opslag     |
 
@@ -122,11 +122,11 @@ Hosts zitten in het interne domein: `*.local.emesix.nl`.
 
 ---
 
-## 5. CW-NAS-AMD – `pmx-ai-ctl` – **hoofdstuk**
+## 5. pve-8845hs-AMD – `pve-8845hs` – **hoofdstuk**
 
 **Rol:** AI-controller, orchestrator en API-router.
 
-- Technische host: `pmx-ai-ctl.local.emesix.nl`
+- Technische host: `pve-8845hs.local.emesix.nl`
 - Bijnaam: **hoofdstuk**
 
 ### Services op hoofdstuk
