@@ -1,0 +1,252 @@
+#!/usr/bin/env bash
+
+# pve-deploy: Non-interactive CLI wrapper for Proxmox Community Scripts
+# Allows automation and programmatic execution of community helper scripts
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMUNITY_SCRIPTS_DIR="${SCRIPT_DIR}/community-scripts"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Helper functions
+msg_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+msg_ok() {
+    echo -e "${GREEN}[OK]${NC} $1"
+}
+
+msg_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+msg_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS] <service>
+
+Deploy Proxmox LXC containers using community scripts without interactive prompts.
+
+OPTIONS:
+    -c, --config FILE       Configuration file (required)
+    -d, --dry-run          Show what would be deployed without executing
+    -h, --help             Show this help message
+    -l, --list             List available services
+    -v, --verbose          Enable verbose output
+
+SERVICES:
+    postgresql, vaultwarden, gitea, wikijs, docker, and more
+
+CONFIGURATION FILE FORMAT:
+    A bash file that exports environment variables for the script.
+    See examples in ./configs/
+
+EXAMPLES:
+    # Deploy PostgreSQL with config file
+    $(basename "$0") -c configs/postgresql.conf postgresql
+
+    # Dry run to see what would happen
+    $(basename "$0") -c configs/vaultwarden.conf --dry-run vaultwarden
+
+    # List all available services
+    $(basename "$0") --list
+
+ENVIRONMENT VARIABLES:
+    These can be set in your config file:
+    
+    Container Configuration:
+    var_ctid            Container ID (default: next available)
+    var_hostname        Container hostname
+    var_cpu             CPU cores (default: 1)
+    var_ram             RAM in MB (default: 1024)
+    var_disk            Disk size in GB (default: 4)
+    var_storage         Storage location (default: local-lvm)
+    var_unprivileged    Unprivileged container: 1=yes, 0=no (default: 1)
+    
+    Network Configuration:
+    var_brg             Network bridge (default: vmbr0)
+    var_net             Network config: "dhcp" or "ip=x.x.x.x/xx,gw=x.x.x.x"
+    var_gateway         Gateway IP (if static)
+    var_vlan            VLAN tag
+    var_mac             MAC address
+    
+    Other:
+    var_ssh             Enable SSH: yes/no (default: no)
+    var_pw              Container root password
+    var_verbose         Verbose mode: yes/no (default: no)
+
+For more information, visit: https://github.com/community-scripts/ProxmoxVE
+EOF
+}
+
+list_services() {
+    msg_info "Available services:"
+    echo ""
+    
+    if [ ! -d "$COMMUNITY_SCRIPTS_DIR/ct" ]; then
+        msg_error "Community scripts directory not found at: $COMMUNITY_SCRIPTS_DIR"
+        echo "Run: git clone https://github.com/community-scripts/ProxmoxVE.git community-scripts"
+        exit 1
+    fi
+    
+    # List available scripts
+    find "$COMMUNITY_SCRIPTS_DIR/ct" -name "*.sh" -type f | while read -r script; do
+        basename "$script" .sh
+    done | sort | pr -4 -t -w 80
+    
+    echo ""
+    msg_info "Total: $(find "$COMMUNITY_SCRIPTS_DIR/ct" -name "*.sh" -type f | wc -l) services"
+}
+
+validate_config() {
+    local config_file="$1"
+    
+    if [ ! -f "$config_file" ]; then
+        msg_error "Configuration file not found: $config_file"
+        exit 1
+    fi
+    
+    # Source the config to validate
+    # shellcheck disable=SC1090
+    source "$config_file"
+    
+    msg_ok "Configuration loaded from: $config_file"
+}
+
+deploy_service() {
+    local service="$1"
+    local dry_run="${2:-false}"
+    
+    local script_path="$COMMUNITY_SCRIPTS_DIR/ct/${service}.sh"
+    
+    if [ ! -f "$script_path" ]; then
+        msg_error "Service script not found: $script_path"
+        msg_info "Use --list to see available services"
+        exit 1
+    fi
+    
+    msg_info "Deploying service: $service"
+    msg_info "Script: $script_path"
+    
+    # Display configuration
+    echo ""
+    msg_info "Container Configuration:"
+    echo "  Container ID: ${var_ctid:-auto}"
+    echo "  Hostname: ${var_hostname:-$service}"
+    echo "  CPU Cores: ${var_cpu:-1}"
+    echo "  RAM: ${var_ram:-1024} MB"
+    echo "  Disk: ${var_disk:-4} GB"
+    echo "  Storage: ${var_storage:-local-lvm}"
+    echo "  Type: $([ "${var_unprivileged:-1}" == "1" ] && echo "Unprivileged" || echo "Privileged")"
+    echo "  Bridge: ${var_brg:-vmbr0}"
+    echo "  Network: ${var_net:-dhcp}"
+    echo ""
+    
+    if [ "$dry_run" = true ]; then
+        msg_warn "DRY RUN MODE - No changes will be made"
+        msg_info "Would execute: bash $script_path"
+        return 0
+    fi
+    
+    # Export all var_* variables for the script
+    export $(compgen -v | grep "^var_")
+    
+    # Execute the script
+    msg_info "Executing deployment script..."
+    echo ""
+    
+    if bash "$script_path"; then
+        msg_ok "Service deployed successfully: $service"
+        return 0
+    else
+        msg_error "Deployment failed for: $service"
+        return 1
+    fi
+}
+
+# Main script logic
+main() {
+    local config_file=""
+    local service=""
+    local dry_run=false
+    local verbose=false
+    
+    # Check if running on Proxmox
+    if ! command -v pveversion &> /dev/null; then
+        msg_warn "pveversion command not found - you may not be on a Proxmox host"
+        msg_warn "This script should be run on a Proxmox VE host"
+    fi
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -c|--config)
+                config_file="$2"
+                shift 2
+                ;;
+            -d|--dry-run)
+                dry_run=true
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -l|--list)
+                list_services
+                exit 0
+                ;;
+            -v|--verbose)
+                verbose=true
+                export var_verbose="yes"
+                shift
+                ;;
+            -*)
+                msg_error "Unknown option: $1"
+                usage
+                exit 1
+                ;;
+            *)
+                service="$1"
+                shift
+                ;;
+        esac
+    done
+    
+    # Validate inputs
+    if [ -z "$service" ]; then
+        msg_error "No service specified"
+        usage
+        exit 1
+    fi
+    
+    if [ -z "$config_file" ] && [ "$dry_run" = false ]; then
+        msg_error "Configuration file required (use -c option)"
+        usage
+        exit 1
+    fi
+    
+    # Load configuration if provided
+    if [ -n "$config_file" ]; then
+        validate_config "$config_file"
+    fi
+    
+    # Deploy the service
+    deploy_service "$service" "$dry_run"
+}
+
+# Run main if not sourced
+if [ "${BASH_SOURCE[0]}" == "${0}" ]; then
+    main "$@"
+fi
