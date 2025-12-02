@@ -1,5 +1,9 @@
 # Proxmox Hypervisors – Hardware & Roles (November 2025)
 
+> **⚠️ PARTIALLY OUTDATED:** IP addresses in this document are from Nov 2025.  
+> **Current IPs (Dec 2025):** See `/docs/infra/network/2025-12-ip-plan-ACTUAL.md`  
+> Hardware info below is still accurate.
+
 This document describes the Proxmox nodes in the homelab and their intended roles.
 It is meant to be the single source of truth for hardware, management IPs and
 high-level workload placement.

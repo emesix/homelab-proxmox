@@ -52,7 +52,7 @@ We hanteren vijf veiligheidsniveaus:
 ### 2.1. 0–99: Guest & User Access
 
 **VLAN 10 – Guest / Unknown MAC (Level 0)**  
-- Subnet: `10.10.10.0/24`  
+- Subnet: `192.168.10.0/24`
 - Type: Onbekende gasten, BYOD, IoT-tests.  
 - Toegang:
   - Alleen naar internet (HTTP/HTTPS/DNS).
@@ -64,7 +64,7 @@ We hanteren vijf veiligheidsniveaus:
 ---
 
 **VLAN 20 – Guest / Known MAC (Level 1)**  
-- Subnet: `10.10.20.0/24`  
+- Subnet: `192.168.20.0/24`
 - Type: Apparaten met bekende MAC, maar geen user-auth:
   - TV’s, tablets, consoles, semi-vertrouwde apparaten.
 - Toegang:
@@ -78,7 +78,7 @@ We hanteren vijf veiligheidsniveaus:
 ---
 
 **VLAN 30 – Privileged Users (Level 2)**  
-- Subnet: `10.10.30.0/24`  
+- Subnet: `192.168.30.0/24`
 - Type:
   - Jouw eigen werkstations/laptops/telefoons.
   - Devices met bekende MAC **en** juiste credentials (WiFi-key / 802.1X / domain).
@@ -99,7 +99,7 @@ er één consistent adresplan is en je niet per server allerlei losse Docker-sub
 hoeft te beheren.
 
 **VLAN 100 – Generic Backend Services**  
-- Subnet: `10.10.100.0/24`  
+- Subnet: `192.168.100.0/24`
 - Type:
   - Standaard backend-applicaties:
     - Wiki backend,
@@ -118,7 +118,7 @@ hoeft te beheren.
 ---
 
 **VLAN 110 – Data & DB Backend**  
-- Subnet: `10.10.110.0/24`  
+- Subnet: `192.168.110.0/24`
 - Type:
   - Databases en datastores:
     - PostgreSQL,
@@ -132,7 +132,7 @@ hoeft te beheren.
 ---
 
 **VLAN 120 – AI Backend**  
-- Subnet: `10.10.120.0/24`  
+- Subnet: `192.168.120.0/24`
 - Type:
   - AI-controller (`hoofdstuk`, `pmx-ai-ctl`)
   - AI-worker (`denkdoos`, `pmx-ai-worker`)
@@ -145,7 +145,7 @@ hoeft te beheren.
 ---
 
 **VLAN 130 – Storage Backend**  
-- Subnet: `10.10.130.0/24`  
+- Subnet: `192.168.130.0/24`
 - Type:
   - NAS dataplane (`schuifkast`, `nas-unraid`),
   - NFS/SMB/Rsync verkeer.
@@ -158,7 +158,7 @@ hoeft te beheren.
 ### 2.3. 200+: Management & Infra (Level 4)
 
 **VLAN 200 – Management**  
-- Subnet: `10.10.200.0/24`  
+- Subnet: `192.168.200.0/24`
 - Type:
   - Proxmox management voor alle nodes,
   - OPNsense management (WAN/DMZ intern),
@@ -173,7 +173,7 @@ hoeft te beheren.
 ---
 
 **VLAN 210 – Monitoring & Logging**  
-- Subnet: `10.10.210.0/24`  
+- Subnet: `192.168.210.0/24`
 - Type:
   - Netdata, Prometheus, Loki/Graylog, Notifiarr-achtige notificatiediensten.
 - Toegang:
